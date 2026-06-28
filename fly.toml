@@ -1,0 +1,47 @@
+# Fly.io configuration for b0x402.
+# Generated 2026-06-28.
+
+app = "b0x402"
+primary_region = "nrt"  # Tokyo — close to Singapore/SEA + Base global L2
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  PYTHONUNBUFFERED = "1"
+  # NOTE: secrets are injected via `fly secrets set`, NOT here.
+
+# Single machine only — invoice state lives in process memory,
+# multiple machines would clobber each other.
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+  cpu_kind = "shared"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false    # b0x402 stays up; sleeps only if cold
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+# HTTP health check (cheap)
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "10s"
+  method = "GET"
+  path = "/health"
+
+# TCP probe in case Fly needs raw port check
+[[services.tcp_checks]]
+  interval = "30s"
+  timeout = "3s"
+  grace_period = "10s"

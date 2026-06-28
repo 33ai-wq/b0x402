@@ -1,0 +1,32 @@
+# Avoid sending secrets or local artifacts to docker build context.
+# Mirrors .gitignore but docker-specific.
+
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+.venv
+venv
+env
+
+*.log
+*.log.*
+pending_invoices.json
+
+.DS_Store
+.fly
+
+README.md
+LICENSE
+
+# Don't ship the docker infrastructure itself
+Dockerfile
+.dockerignore
+fly.toml
