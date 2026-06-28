@@ -1,0 +1,35 @@
+# ── Secrets — JANGAN masuk git ────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+wallets/
+keys/
+keystore/
+envelopes/
+
+# ── Python bytecode / cache ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ── Virtual envs ──────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Logs & runtime state ──────────────────────────────────────────────────
+*.log
+*.log.*
+pending_invoices.json
+*.bak
+*.swp
+.DS_Store
+
+# ── Fly.io / deploy artifacts (deployed via fly secrets, not via git) ──────
+.fly/
+fly.deploy.*
