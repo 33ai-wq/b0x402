@@ -1,0 +1,64 @@
+name: Deploy CF Worker + Verify
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cf-worker/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CF_ACCOUNT_ID: 'b9f2219c5fc157dbab0250ea33e19e52'
+      WORKER_URL: 'https://x402-cf-worker.mulberry-boar.workers.dev'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Syntax check — index.js
+        working-directory: cf-worker
+        run: |
+          node --check src/index.js && echo "✓ Syntax OK"
+        shell: bash
+
+      - name: Deploy to Cloudflare Workers
+        working-directory: cf-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          npx --yes wrangler@latest deploy \
+            --name x402-cf-worker \
+            --compatibility-date 2026-06-28
+        shell: bash
+
+      - name: Verify /health
+        run: |
+          sleep 3
+          curl -fsSL "$WORKER_URL/health" | tee /tmp/health.json
+          if grep -q '"status":"ok"' /tmp/health.json; then
+            echo "✓ Worker live"
+          else
+            echo "✗ Worker /health didn't return ok"
+            exit 1
+          fi
+
+      - name: Verify 402 challenge
+        run: |
+          curl -sI "$WORKER_URL/v1/meme-hunter" | tee /tmp/402.txt
+          if grep -qi 'X-Payment-Version: 2' /tmp/402.txt && \
+             grep -qi '^HTTP/[12] 402' /tmp/402.txt; then
+            echo "✓ x402 V2 invoice present"
+          else
+            echo "✗ 402 V2 header missing"
+            exit 1
+          fi

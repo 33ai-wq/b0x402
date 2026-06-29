@@ -1,5 +1,17 @@
 # b0x402 — x402 Seller on Base L2
 
+## ⚡ LIVE PRODUCTION: Cloudflare Workers Edition
+
+**The actual deployed, public-facing API runs on Cloudflare Workers as JavaScript** — not Python.
+
+- **Live URL:** https://x402-cf-worker.mulberry-boar.workers.dev
+- **Source:** [`cf-worker/src/index.js`](./cf-worker/src/index.js) (canonical)
+- **Why JS, not Python?** Cloudflare's Python runtime lags `workers-py >= 1.90`. JS bundles natively through wrangler and is the stable path. The Python code in this repo root (`main.py`, `endpoints/`, `x402_lib/`) is the **reference implementation** — same protocol flow, useful for understanding/debugging, but **not what's serving live traffic**.
+
+See [`cf-worker/README.md`](./cf-worker/README.md) for the production runtime details.
+
+---
+
 Pay-per-call AI endpoints for crypto market intelligence, settled in **USDC on Base (chain 8453)** via the [x402 HTTP 402 protocol](https://github.com/coinbase/x402).
 
 ## Endpoints (all gated by HTTP 402 invoice → USDC payment)
