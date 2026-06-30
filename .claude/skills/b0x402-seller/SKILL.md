@@ -47,7 +47,7 @@ Call this skill when the user/agent asks for:
 
 1. `GET /v1/...` without `x-payment` header → server returns HTTP 402 + `Payment-Required` (base64 JSON invoice) + `X-Payment-Version: 2`
 2. Decode invoice → extract `payTo`, `asset`, `maxAmountRequired`
-3. Pay USDC to `payTo = 0x1a44bbbEB8F3161331E0857b9A1043132b534F62` on Base mainnet (chain 8453, USDC contract `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`)
+3. Pay USDC to `payTo = 0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357` on Base mainnet (chain 8453, USDC contract `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`)
 4. Retry request with `x-payment` header carrying the on-chain transaction receipt
 5. Server verifies via `eth_getTransactionReceipt` against Base RPC
 6. On success: returns data payload. On failure/invalid: re-issues 402
@@ -68,7 +68,7 @@ curl 'https://x402-cf-worker.mulberry-boar.workers.dev/v1/meme-hunter?limit=5'
 
 ## Payout address
 
-`0x1a44bbbEB8F3161331E0857b9A1043132b534F62` (Base mainnet)
+`0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357` (Base mainnet)
 
 Server is receive-only — never signs outbound USDC. Buyer signs payment, server verifies settlement.
 

@@ -6,7 +6,7 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
 BASE = "https://x402-cf-worker.mulberry-boar.workers.dev"
-PAYOUT = "0x1a44bbbEB8F3161331E0857b9A1043132b534F62"
+PAYOUT = "0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357"
 USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
 BASE_RPC = "https://mainnet.base.org"
 

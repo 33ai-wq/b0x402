@@ -43,7 +43,7 @@ Wants raw data for research notes, dashboards, newsletters. Calls a few endpoint
 A: Yes. Settled on Base mainnet (chain id 8453) in USDC (contract `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`). Atomic units, 6 decimals.
 
 **Q: How does payment actually flow?**
-A: Client sends the request → if no `x-payment` header, server returns 402 + invoice. Client pays USDC to `0x1a44bbb…f62` via any Base wallet including programmatic agent ones. Client retries with the on-chain transaction receipt as the x-payment header. Server verifies via Base RPC, then serves data.
+A: Client sends the request → if no `x-payment` header, server returns 402 + invoice. Client pays USDC to `0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357` via any Base wallet including programmatic agent ones. Client retries with the on-chain transaction receipt as the x-payment header. Server verifies via Base RPC, then serves data.
 
 **Q: What if I don't pay?**
 A: You get 402 back. Data isn't returned.

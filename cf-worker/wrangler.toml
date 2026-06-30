@@ -3,5 +3,5 @@ main = "src/index.js"
 compatibility_date = "2026-06-28"
 
 [vars]
-X402_PAYOUT_ADDRESS = "0x1a44bbbeb8f3161331e0857b9a1043132b534f62"
+X402_PAYOUT_ADDRESS = "0x57eec52d76a4a78d4562fc2564101a4bd2e3f357"
 X402_BYPASS = "false"

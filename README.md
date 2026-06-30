@@ -113,7 +113,7 @@ Free tier: 3 shared-cpu 256MB VMs, 3GB storage, 160GB bandwidth/month.
 
 Payout address (Base mainnet, USDC):
 ```
-0x1a44bbbEB8F3161331E0857b9A1043132b534F62
+0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357
 ```
 
 Owner: `b0x70`. x402 endpoints forward incoming USDC to this address.

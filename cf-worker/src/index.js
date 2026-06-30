@@ -18,7 +18,7 @@
  */
 
 const CFG = {
-  payoutAddress: "0x1a44bbbEB8F3161331E0857b9A1043132b534F62",
+  payoutAddress: "0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357",
   bypass: true,             // set to false in production
   // Bypass flag: append ?x402_bypass=true to any endpoint to skip payment
   usdcContract: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
@@ -397,7 +397,7 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
               type: "apiKey",
               in: "header",
               name: "x-payment",
-              description: "x402 V2 USDC payment payload. Send USDC on Base to 0x1a44bbbEB8F3161331E0857b9A1043132b534F62, then retry with this header. Server responds 402 + Payment-Required invoice when header absent.",
+              description: "x402 V2 USDC payment payload. Send USDC on Base to 0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357, then retry with this header. Server responds 402 + Payment-Required invoice when header absent.",
             },
           },
         },
@@ -414,7 +414,7 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
                 protocols: [{ x402: {} }],
                 network: "base",
                 asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                payTo: "0x1a44bbbEB8F3161331E0857b9A1043132b534F62",
+                payTo: "0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357",
               },
               parameters: [
                 { name: "limit", in: "query", required: false, schema: { type: "integer", default: 10, description: "Number of results (max 50)" } },
@@ -468,7 +468,7 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
                 protocols: [{ x402: {} }],
                 network: "base",
                 asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                payTo: "0x1a44bbbEB8F3161331E0857b9A1043132b534F62",
+                payTo: "0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357",
               },
               responses: {
                 "200": {
@@ -504,7 +504,7 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
                 protocols: [{ x402: {} }],
                 network: "base",
                 asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                payTo: "0x1a44bbbEB8F3161331E0857b9A1043132b534F62",
+                payTo: "0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357",
               },
               requestBody: {
                 required: false,
@@ -554,7 +554,7 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
                 protocols: [{ x402: {} }],
                 network: "base",
                 asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                payTo: "0x1a44bbbEB8F3161331E0857b9A1043132b534F62",
+                payTo: "0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357",
               },
               parameters: [
                 { name: "address", in: "query", required: true, schema: { type: "string", description: "EVM wallet address (0x...)" } },
@@ -661,7 +661,7 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
           },
         ],
         payment: {
-          address: "0x1a44bbbEB8F3161331E0857b9A1043132b534F62",
+          address: "0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357",
           token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
           chain: "eip155:8453",
           scheme: "exact",

@@ -37,7 +37,7 @@ The Python reference implementation lives in the repo root (`main.py`, `endpoint
      "network": "base",
      "maxAmountRequired": "1000",
      "resource": "https://x402-cf-worker.mulberry-boar.workers.dev/v1/meme-hunter",
-     "payTo": "0x1a44bbbEB8F3161331E0857b9A1043132b534F62",
+     "payTo": "0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357",
      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
      "maxTimeoutSeconds": 300,
      "extensions": { "bazaar": { "info": { "input": { "type": "http", "method": "GET" } }, "schema": {} } }
@@ -58,7 +58,7 @@ main = "src/index.js"
 compatibility_date = "2026-06-28"
 
 [vars]
-X402_PAYOUT_ADDRESS = "0x1a44bbbEB8F3161331E0857b9A1043132b534F62"
+X402_PAYOUT_ADDRESS = "0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357"
 X402_BYPASS = "false"
 ```
 
@@ -90,7 +90,7 @@ The Cloudflare API token is **session-only** — set as env var while deploying,
 ## Settlement address
 
 ```
-0x1a44bbbEB8F3161331E0857b9A1043132b534F62
+0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357
 ```
 
 Base mainnet, USDC (atomic units, 6 decimals). All paid calls route settlement to this address.
