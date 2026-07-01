@@ -27,10 +27,10 @@ const CFG = {
 };
 
 const PRICES = {
-  "/v1/meme-hunter":    1_000,
-  "/v1/defi-sentiment": 5_000,
-  "/v1/dinalibrium":    5_000,
-  "/v1/wallet-profile": 10_000,
+  "/v1/meme-hunter":    10_000,    // $0.01 (B0x70 floor price 2026-06-30)
+  "/v1/defi-sentiment": 10_000,    // $0.01 (B0x70 floor price)
+  "/v1/dinalibrium":    10_000,    // $0.01 (B0x70 floor price)
+  "/v1/wallet-profile": 100_000,   // $0.10 (high-value forensic call)
 };
 
 // ✅ FIX #4: per-endpoint Bazaar schemas with actual parameters
@@ -418,8 +418,7 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
           title:       "b0x402 API",
           version:     "1.0.0",
           description: "AI-powered crypto intelligence — meme signals, DeFi sentiment, market equilibrium, wallet profiling. Pay per call in USDC on Base.",
-          "x-guidance": "All endpoints require x402 USDC payment on Base mainnet. Hit without x-payment header to receive 402 invoice.",
-          contact: { email: "b0x402@agent.dev" },
+          contact: { email: "yusliarifn78@gmail.com" },
         },
         components: {
           securitySchemes: {
@@ -440,7 +439,7 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
               tags:        ["Crypto Intelligence"],
               security:    [{ x402: [] }],
               "x-payment-info": {
-                price:     { mode: "fixed", currency: "USD", amount: "0.001" },
+                price:     { mode: "fixed", currency: "USD", amount: "0.01" },
                 protocols: ["x402"],  // ✅ FIX #7: was [{x402:{}}] — must be ["x402"]
                 network:   CFG.network,
                 asset:     CFG.usdcContract,
@@ -463,12 +462,12 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
             get: {
               operationId: "defiSentiment",
               summary:     "DeFi Market Sentiment",
-              description: "Real-time DeFi market mood — neutral, bullish, or bearish signal.",
+              description: "Real-time DeFi market mood — bullish, bearish, or neutral signal.",
               tags:        ["Crypto Intelligence"],
               security:    [{ x402: [] }],
               "x-payment-info": {
-                price:     { mode: "fixed", currency: "USD", amount: "0.005" },
-                protocols: ["x402"],  // ✅ FIX #7
+                price:     { mode: "fixed", currency: "USD", amount: "0.01" },
+                protocols: ["x402"],
                 network:   CFG.network,
                 asset:     CFG.usdcContract,
                 payTo:     CFG.payoutAddress,
@@ -483,12 +482,12 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
             post: {
               operationId: "dinalibrium",
               summary:     "Market Equilibrium Data",
-              description: "ETH/stablecoin equilibrium metrics — ratio, supply dynamics, 7-day change.",
+              description: "ETH/stablecoin equilibrium metrics — ratio, supply dynamics, 7d change.",
               tags:        ["Crypto Intelligence"],
               security:    [{ x402: [] }],
               "x-payment-info": {
-                price:     { mode: "fixed", currency: "USD", amount: "0.005" },
-                protocols: ["x402"],  // ✅ FIX #7
+                price:     { mode: "fixed", currency: "USD", amount: "0.01" },
+                protocols: ["x402"],
                 network:   CFG.network,
                 asset:     CFG.usdcContract,
                 payTo:     CFG.payoutAddress,
@@ -517,12 +516,12 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
             get: {
               operationId: "walletProfile",
               summary:     "Wallet Profile",
-              description: "On-chain wallet profiling — net worth, tx count, portfolio breakdown for any EVM address.",
+              description: "On-chain wallet profiling — net worth, tx count, portfolio. Query param 'address' required.",
               tags:        ["Crypto Intelligence"],
               security:    [{ x402: [] }],
               "x-payment-info": {
-                price:     { mode: "fixed", currency: "USD", amount: "0.010" },
-                protocols: ["x402"],  // ✅ FIX #7
+                price:     { mode: "fixed", currency: "USD", amount: "0.10" },
+                protocols: ["x402"],
                 network:   CFG.network,
                 asset:     CFG.usdcContract,
                 payTo:     CFG.payoutAddress,
