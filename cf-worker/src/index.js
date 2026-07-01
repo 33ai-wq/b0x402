@@ -147,7 +147,9 @@ async function verifyTransfer(toAddress, minAmount) {
 // ── x402 Gate ──────────────────────────────────────────────────────────────
 
 async function checkX402(path, paymentHdr, bypassParam) {
-  if (CFG.bypass || bypassParam === "true") return { err: null, paid: true };
+  // BYPASS DISABLED 2026-07-01 — security: no URL param override allowed
+  // Only CFG.bypass (from env X402_BYPASS=true) can enable — and CFG.bypass = false by default
+  if (CFG.bypass) return { err: null, paid: true };
   if (!PRICES[path]) return { err: null, paid: true };
 
   if (!paymentHdr) {
