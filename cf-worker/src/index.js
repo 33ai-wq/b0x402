@@ -391,33 +391,16 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
   }
 
   // ── /.well-known/x402 — x402scan Discovery Document ─────────────────────
-  // ── /.well-known/x402 — x402scan Discovery Document ─────────────────────
   // x402scan validates per-resource object: { resource: string, accepts: [...] }
+  // url.pathname → "/.well-known/x402"
   if (path === "/.well-known/x402.json" || path === "/.well-known/x402") {
-    const makeAccepts = (p) => ({
-      scheme:            "exact",
-      resource:          `${CFG.baseUrl}${p}`,
-      network:           CFG.network,
-      maxAmountRequired: String(CFG.prices[p]),
-      payTo:             CFG.payoutAddress,
-      asset:             CFG.usdcContract,
-      maxTimeoutSeconds: CFG.invoiceTTL,
-      mimeType:          "application/json",
+    const res = JSON.stringify({
+      version:         1,
+      resources:      [CFG.baseUrl + "/v1/meme-hunter", CFG.baseUrl + "/v1/defi-sentiment", CFG.baseUrl + "/v1/dinalibrium", CFG.baseUrl + "/v1/wallet-profile"],
+      ownershipProofs: [],
+      instructions:    "All endpoints require x402 USDC payment on Base. Hit without x-payment to receive 402 invoice.",
     });
-    return Response.json(
-      {
-        version:    1,
-        resources: [
-          { resource: `${CFG.baseUrl}/v1/meme-hunter`,    accepts: [makeAccepts("/v1/meme-hunter")] },
-          { resource: `${CFG.baseUrl}/v1/defi-sentiment`, accepts: [makeAccepts("/v1/defi-sentiment")] },
-          { resource: `${CFG.baseUrl}/v1/dinalibrium`,   accepts: [makeAccepts("/v1/dinalibrium")] },
-          { resource: `${CFG.baseUrl}/v1/wallet-profile`, accepts: [makeAccepts("/v1/wallet-profile")] },
-        ],
-        ownershipProofs: [],
-        instructions:    "All endpoints require x402 USDC payment on Base. Hit without x-payment to receive 402 invoice.",
-      },
-      { headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(res, { headers: { "Content-Type": "application/json" } });
   }
 
   // ── /openapi.json — x402scan OpenAPI Discovery ──────────────────────────
