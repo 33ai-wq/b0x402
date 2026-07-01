@@ -357,9 +357,9 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
 <p class="sub">b0x402 is a paid x402 API on the Base network. Four endpoints, USDC-based pricing, no subscriptions. Hit any route without an <code>x-payment</code> header to receive a 402 invoice.</p>
 <h2 style="font-size:13px;letter-spacing:.08em;color:#71717a;margin-bottom:18px;font-family:ui-monospace,monospace;">ENDPOINTS · 4</h2>
 <div class="grid">
-<a class="card" href="/v1/meme-hunter" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/meme-hunter</h3><p>Meme-coin signals from DexScreener — liquidity, volume, 24h price action, boost score.</p><span class="price">$0.001 USDC / call</span></a>
-<a class="card" href="/v1/defi-sentiment" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/defi-sentiment</h3><p>Macro DeFi market mood — bullish / bearish / neutral with confidence score.</p><span class="price">$0.005 USDC / call</span></a>
-<a class="card" href="/v1/dinalibrium" style="text-decoration:none;color:inherit"><h3><span class="method post">POST</span>/v1/dinalibrium</h3><p>ETH/stablecoin equilibrium ratio and stablecoin-supply dynamics.</p><span class="price">$0.005 USDC / call</span></a>
+<a class="card" href="/v1/meme-hunter" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/meme-hunter</h3><p>Meme-coin signals from DexScreener — liquidity, volume, 24h price action, boost score.</p><span class="price">$0.010 USDC / call</span></a>
+<a class="card" href="/v1/defi-sentiment" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/defi-sentiment</h3><p>Macro DeFi market mood — bullish / bearish / neutral with confidence score.</p><span class="price">$0.10 USDC / call</span></a>
+<a class="card" href="/v1/dinalibrium" style="text-decoration:none;color:inherit"><h3><span class="method post">POST</span>/v1/dinalibrium</h3><p>ETH/stablecoin equilibrium ratio and stablecoin-supply dynamics.</p><span class="price">$0.10 USDC / call</span></a>
 <a class="card" href="/v1/wallet-profile?address=0x5118c9FB60b2d3d086491654D5a0C344298b57F2" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/wallet-profile</h3><p>On-chain wallet profile — tx count, first/last seen, portfolio summary for any EVM address.</p><span class="price">$0.010 USDC / call</span></a>
 </div>
 <div class="section"><h2>How it works</h2>
