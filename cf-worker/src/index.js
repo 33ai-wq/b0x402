@@ -420,7 +420,8 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
           title:       "b0x402 API",
           version:     "1.0.0",
           description: "AI-powered crypto intelligence — meme signals, DeFi sentiment, market equilibrium, wallet profiling. Pay per call in USDC on Base.",
-          contact: { email: "yusliarifn78@gmail.com" },
+          contact:     { email: "yusliarifn78@gmail.com" },
+          "x-guidance": "This API serves crypto intelligence endpoints on Base mainnet, priced in USDC via x402 v2. To call any paid endpoint: (1) send request without x-payment header to receive HTTP 402 invoice; (2) pay the USDC amount to the payout address on Base (chain 8453); (3) retry with base64-encoded invoice in X-Payment header. All responses are JSON. Meme-hunter accepts sort/limit params; wallet-profile requires 'address' query param; dinalibrium accepts POST body with stablecoin/window options.",
         },
         components: {
           securitySchemes: {
@@ -447,6 +448,24 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
                 asset:     CFG.usdcContract,
                 payTo:     CFG.payoutAddress,
               },
+              "x-agent": {
+                accepts: [{
+                  resource:        { uri: `${CFG.baseUrl}/v1/meme-hunter` },
+                  scheme:          "exact",
+                  network:         CFG.network,
+                  asset:           CFG.usdcContract,
+                  payTo:           CFG.payoutAddress,
+                  maxTimeoutSeconds: CFG.invoiceTTL,
+                }],
+              },
+              "extensions": {
+                bazaar: {
+                  schema: {
+                    input:  { type: "object", properties: { limit: { type: "integer", description: "Results count (max 50)" }, sort_by: { type: "string", description: "score|volume|change|liquidity|boosted" } }, required: [], additionalProperties: true },
+                    output: { type: "object", properties: { count: { type: "integer", description: "Number of signals" }, signals: { type: "array", description: "Meme coin signals array" }, fetched_at: { type: "string", description: "ISO timestamp" } }, additionalProperties: true },
+                  },
+                },
+              },
               parameters: [
                 { name: "limit",   in: "query", required: false, schema: { type: "integer", default: 10,      description: "Results count (max 50)" } },
                 { name: "sort_by", in: "query", required: false, schema: { type: "string",  default: "score", description: "score|volume|change|liquidity|boosted" } },
@@ -468,11 +487,29 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
               tags:        ["Crypto Intelligence"],
               security:    [{ x402: [] }],
               "x-payment-info": {
-                price:     { mode: "fixed", currency: "USD", amount: "0.01" },
+                price:     { mode: "fixed", currency: "USD", amount: "0.10" },
                 protocols: ["x402"],
                 network:   CFG.network,
                 asset:     CFG.usdcContract,
                 payTo:     CFG.payoutAddress,
+              },
+              "x-agent": {
+                accepts: [{
+                  resource:        { uri: `${CFG.baseUrl}/v1/defi-sentiment` },
+                  scheme:          "exact",
+                  network:         CFG.network,
+                  asset:           CFG.usdcContract,
+                  payTo:           CFG.payoutAddress,
+                  maxTimeoutSeconds: CFG.invoiceTTL,
+                }],
+              },
+              "extensions": {
+                bazaar: {
+                  schema: {
+                    input:  { type: "object", properties: {}, required: [], additionalProperties: true },
+                    output: { type: "object", properties: { signal: { type: "string", description: "bullish | bearish | neutral" }, timestamp: { type: "string", description: "ISO timestamp" } }, additionalProperties: true },
+                  },
+                },
               },
               responses: {
                 "200": { description: "Sentiment signal", content: { "application/json": { schema: { type: "object", properties: { signal: { type: "string" }, score: { type: "number" } } } } } },
@@ -488,11 +525,29 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
               tags:        ["Crypto Intelligence"],
               security:    [{ x402: [] }],
               "x-payment-info": {
-                price:     { mode: "fixed", currency: "USD", amount: "0.01" },
+                price:     { mode: "fixed", currency: "USD", amount: "0.10" },
                 protocols: ["x402"],
                 network:   CFG.network,
                 asset:     CFG.usdcContract,
                 payTo:     CFG.payoutAddress,
+              },
+              "x-agent": {
+                accepts: [{
+                  resource:        { uri: `${CFG.baseUrl}/v1/dinalibrium` },
+                  scheme:          "exact",
+                  network:         CFG.network,
+                  asset:           CFG.usdcContract,
+                  payTo:           CFG.payoutAddress,
+                  maxTimeoutSeconds: CFG.invoiceTTL,
+                }],
+              },
+              "extensions": {
+                bazaar: {
+                  schema: {
+                    input:  { type: "object", properties: { stablecoin: { type: "string", description: "USDC | USDT | DAI" }, window: { type: "string", description: "1d | 7d | 30d" } }, required: [], additionalProperties: true },
+                    output: { type: "object", properties: { eth_stablecoin_ratio: { type: "number", description: "ETH/stablecoin equilibrium ratio" }, stablecoin_supply_change_pct_7d: { type: "number", description: "7-day supply change pct" }, timestamp: { type: "string", description: "ISO timestamp" } }, additionalProperties: true },
+                  },
+                },
               },
               requestBody: {
                 required: false,
@@ -527,6 +582,24 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
                 network:   CFG.network,
                 asset:     CFG.usdcContract,
                 payTo:     CFG.payoutAddress,
+              },
+              "x-agent": {
+                accepts: [{
+                  resource:        { uri: `${CFG.baseUrl}/v1/wallet-profile` },
+                  scheme:          "exact",
+                  network:         CFG.network,
+                  asset:           CFG.usdcContract,
+                  payTo:           CFG.payoutAddress,
+                  maxTimeoutSeconds: CFG.invoiceTTL,
+                }],
+              },
+              "extensions": {
+                bazaar: {
+                  schema: {
+                    input:  { type: "object", properties: { address: { type: "string", description: "EVM wallet address (0x...)" } }, required: ["address"], additionalProperties: true },
+                    output: { type: "object", properties: { address: { type: "string", description: "Queried wallet address" }, tx_count: { type: "integer", description: "Total tx count" }, net_worth_usd: { type: "number", description: "Net worth in USD" }, timestamp: { type: "string", description: "ISO timestamp" } }, additionalProperties: true },
+                  },
+                },
               },
               parameters: [
                 { name: "address", in: "query", required: true, schema: { type: "string", description: "EVM wallet address (0x...)" } },
