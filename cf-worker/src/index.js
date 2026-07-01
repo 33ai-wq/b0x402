@@ -398,7 +398,7 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
       scheme:            "exact",
       resource:          `${CFG.baseUrl}${p}`,
       network:           CFG.network,
-      maxAmountRequired: String(CFG.prices[p] * 1_000_000), // price × 1e6 for USDC micro-units
+      maxAmountRequired: String(CFG.prices[p]),
       payTo:             CFG.payoutAddress,
       asset:             CFG.usdcContract,
       maxTimeoutSeconds: CFG.invoiceTTL,
