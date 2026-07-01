@@ -33,13 +33,11 @@ jobs:
 
       - name: Deploy to Cloudflare Workers
         working-directory: cf-worker
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
+          export CLOUDFLARE_API_TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}"
           npx --yes wrangler@latest deploy \
             --name x402-cf-worker \
             --compatibility-date 2026-06-28
-        shell: bash
 
       - name: Verify /health
         run: |
