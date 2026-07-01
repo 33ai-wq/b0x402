@@ -391,21 +391,30 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
   }
 
   // ── /.well-known/x402 — x402scan Discovery Document ─────────────────────
-  // ✅ FIX #3: old format had custom fields + x402Version key + "endpoints" array.
-  //            x402scan DISCOVERY.md requires: {version:1, resources:["https://..."]}
+  // ── /.well-known/x402 — x402scan Discovery Document ─────────────────────
+  // x402scan validates per-resource object: { resource: string, accepts: [...] }
   if (path === "/.well-known/x402.json" || path === "/.well-known/x402") {
+    const makeAccepts = (p) => ({
+      scheme:            "exact",
+      resource:          `${CFG.baseUrl}${p}`,
+      network:           CFG.network,
+      maxAmountRequired: String(CFG.prices[p] * 1_000_000), // price × 1e6 for USDC micro-units
+      payTo:             CFG.payoutAddress,
+      asset:             CFG.usdcContract,
+      maxTimeoutSeconds: CFG.invoiceTTL,
+      mimeType:          "application/json",
+    });
     return Response.json(
       {
-        version: 1,             // required field — was "x402Version" (wrong key)
-        resources: [            // required field — was "endpoints" (wrong key, wrong shape)
-          `${CFG.baseUrl}/v1/meme-hunter`,
-          `${CFG.baseUrl}/v1/defi-sentiment`,
-          `${CFG.baseUrl}/v1/dinalibrium`,
-          `${CFG.baseUrl}/v1/wallet-profile`,
+        version:    1,
+        resources: [
+          { resource: `${CFG.baseUrl}/v1/meme-hunter`,    accepts: [makeAccepts("/v1/meme-hunter")] },
+          { resource: `${CFG.baseUrl}/v1/defi-sentiment`, accepts: [makeAccepts("/v1/defi-sentiment")] },
+          { resource: `${CFG.baseUrl}/v1/dinalibrium`,   accepts: [makeAccepts("/v1/dinalibrium")] },
+          { resource: `${CFG.baseUrl}/v1/wallet-profile`, accepts: [makeAccepts("/v1/wallet-profile")] },
         ],
-        // Optional fields accepted by x402scan
         ownershipProofs: [],
-        instructions: "All endpoints require x402 USDC payment on Base. Hit without x-payment to receive 402 invoice.",
+        instructions:    "All endpoints require x402 USDC payment on Base. Hit without x-payment to receive 402 invoice.",
       },
       { headers: { "Content-Type": "application/json" } }
     );
