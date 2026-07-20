@@ -1,8 +1,8 @@
 /**
  * cf-worker/src/index.js  —  b0x402 x402 paid API (Cloudflare Worker)
  *
- * ══════════════════════════════════════════════════════════════════
- *  BUGS FIXED (8 total):
+ * ============================================================================
+ *  BUGS FIXED (10 total):
  *
  *  #1  bypass: false          was true  → 402 NEVER returned, x402scan got 200
  *  #2  network: "eip155:8453" was "base" → x402 v2 requires CAIP-2 format
@@ -13,9 +13,22 @@
  *  #6a verifyTransfer topic[1] was 0x0 (mint-only) → null accepts any sender
  *  #6b verifyTransfer fromBlock was "0x0" (genesis) → recent ~1000 blocks only
  *  #7  OpenAPI protocols       was [{x402:{}}] → must be ["x402"]
- * ══════════════════════════════════════════════════════════════════
- */
-
+ *  #8  outputSchema stub       was {type:"object"} props missing → x402scan: "object schema missing properties"
+ *      bazaar.schema.output    was missing                      → CDP validate: "Missing output schema"
+ *      description             echoed path                       → BEA guard: signal too low
+ *  #9  btoa() on UTF-8 summaries → InvalidCharacterError → CF 1101 crash, defi-sentiment & wallet-profile only
+ * ============================================================================
+ *  #10 PaymentRequirementsV2 SPEC MISMATCH:
+ *      We were sending v1-shaped accepts[] (maxAmountRequired, description,
+ *      mimeType, resource, outputSchema inside each accept) but x402scan uses
+ *      @x402/core/schemas PaymentRequirementsV2Schema which is much stricter:
+ *        - field renames: `maxAmountRequired` → `amount`
+ *        - resource moved OUT of accepts[] into top-level `resource: ResourceInfoSchema`
+ *        - description, mimeType moved to top-level resource
+ *        - outputSchema belongs in resource/extensions, NOT each accept
+ *      x402scan error: "[402]No valid x402 response found" — the FREE Probe
+ *      never parses, so it can't probe automatically.
+ * ============================================================================ */
 const CFG = {
   payoutAddress: "0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357",
   bypass:        false,           // ✅ FIX #1: was true → bypassed all payment, 402 never sent
@@ -33,45 +46,193 @@ const PRICES = {
   "/v1/wallet-profile": 100_000,   // $0.10 (high-value forensic call)
 };
 
-// ✅ FIX #4: per-endpoint Bazaar schemas with actual parameters
-// x402scan rejects empty schema {} with "parseResponse: Missing input schema"
+// Per x402san goldfiles (apps/scan/src/lib/x402/v2/schema.test.ts), the canonical
+// V2 Bazaar shape is:
+//   extensions.bazaar = {
+//     info: {
+//       input: { type:"http", method:"GET"|"POST",
+//                [queryParams]: { ...example },    ← GET
+//                [bodyType]:"json", body:{...} },    ← POST
+//       output: { ...example }
+//     },
+//     schema: {                                      ← FLAT JSON Schema (NOT nested)
+//       $schema, type, properties: {
+//         input:  { type:"object", properties: { queryParams: {...} | body: {...} } },
+//         output: { type:"object", properties: {...} }
+//       }
+//     }
+//   }
+// The validator reads schema.properties.input.properties.queryParams/body
+// directly, so the schema MUST be flat (input/output as top-level schemas under
+// `properties`) — not nested under `schema.input` as we had.
+//
+// `info.input` MUST contain an example object (queryParams or body) so an
+// agent knows how to call the route. Empty `input` triggers the "input schema
+// is missing" warning we just hit on the 3 GET routes.
 const BAZAAR = {
   "/v1/meme-hunter": {
-    info: { input: { type: "http", method: "GET" } },
+    info: {
+      tags: ["crypto","defi","meme","signals"],
+      summary: "Top-ranked meme-coin signals from DexScreener (Base chain). Liquidity, 24h volume, boost score. $0.01 USDC/call.",
+      input: {
+        type: "http",
+        method: "GET",
+        queryParams: { limit: 10, sort_by: "score" },   // ← example defaults for agent
+      },
+      output: { count: 0, signals: [], fetched_at: "ISO" },
+    },
     schema: {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
       properties: {
-        limit:   { type: "integer", default: 10,      description: "Number of results (max 50)" },
-        sort_by: { type: "string",  default: "score", description: "Sort key: score|volume|change|liquidity|boosted" },
+        input: {
+          type: "object",
+          properties: {
+            queryParams: {
+              type: "object",
+              properties: {
+                limit:   { type: "integer", minimum: 1, maximum: 50,  default: 10,      description: "Results count (max 50)" },
+                sort_by: { type: "string",  enum: ["score","volume","change","liquidity","boosted"], default: "score", description: "Sort key" },
+              },
+              required: [], additionalProperties: true,
+            },
+          },
+          additionalProperties: true,
+        },
+        output: {
+          type: "object",
+          properties: {
+            count:      { type: "integer", description: "Number of signals returned" },
+            signals:    { type: "array",   items: { type: "object" }, description: "Ranked meme-coin signals array" },
+            fetched_at: { type: "string",  description: "ISO timestamp of the fetch" },
+          },
+          required: ["count","signals","fetched_at"], additionalProperties: true,
+        },
       },
     },
   },
   "/v1/defi-sentiment": {
-    info: { input: { type: "http", method: "GET" } },
+    info: {
+      tags: ["crypto","defi","sentiment","macro"],
+      summary: "Macro DeFi market sentiment signal - bullish/bearish/neutral with confidence. $0.01 USDC/call.",
+      input: {
+        type: "http",
+        method: "GET",
+        queryParams: { topic: "base" },
+      },
+      output: { signal: "neutral", score: 0.5, timestamp: "ISO" },
+    },
     schema: {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
       properties: {
-        topic: { type: "string", default: "base", description: "Market topic filter (e.g. 'base', 'defi')" },
+        input: {
+          type: "object",
+          properties: {
+            queryParams: {
+              type: "object",
+              properties: {
+                topic: { type: "string", default: "base", description: "Market topic filter (e.g. 'base', 'defi')" },
+              },
+              required: [], additionalProperties: true,
+            },
+          },
+          additionalProperties: true,
+        },
+        output: {
+          type: "object",
+          properties: {
+            signal:    { type: "string", enum: ["bullish","bearish","neutral"], description: "Sentiment classification" },
+            score:     { type: "number", description: "Confidence score (0..1)" },
+            timestamp: { type: "string", description: "ISO timestamp" },
+          },
+          required: ["signal","score","timestamp"], additionalProperties: true,
+        },
       },
     },
   },
   "/v1/dinalibrium": {
-    info: { input: { type: "http", method: "POST" } },
+    info: {
+      tags: ["crypto","defi","equilibrium","onchain"],
+      summary: "ETH/stablecoin equilibrium ratio + stablecoin supply dynamics. POST body accepts {stablecoin, window}. $0.10 USDC/call.",
+      input: {
+        type: "http",
+        method: "POST",
+        bodyType: "json",
+        body: { stablecoin: "USDC", window: "7d" },
+      },
+      output: { eth_stablecoin_ratio: 0.87, stablecoin_supply_change_pct_7d: 2.3, timestamp: "ISO" },
+    },
     schema: {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
       properties: {
-        stablecoin: { type: "string", default: "USDC", description: "USDC | USDT | DAI" },
-        window:     { type: "string", default: "7d",   description: "Lookback window: 1d | 7d | 30d" },
+        input: {
+          type: "object",
+          properties: {
+            body: {
+              type: "object",
+              properties: {
+                stablecoin: { type: "string", enum: ["USDC","USDT","DAI"], default: "USDC", description: "Stablecoin to anchor" },
+                window:     { type: "string", enum: ["1d","7d","30d"],      default: "7d",   description: "Lookback window" },
+              },
+              required: [], additionalProperties: true,
+            },
+          },
+          additionalProperties: true,
+        },
+        output: {
+          type: "object",
+          properties: {
+            eth_stablecoin_ratio:            { type: "number", description: "ETH/stablecoin equilibrium ratio" },
+            stablecoin_supply_change_pct_7d: { type: "number", description: "7-day stablecoin supply change pct" },
+            timestamp:                       { type: "string", description: "ISO timestamp" },
+          },
+          required: ["eth_stablecoin_ratio","stablecoin_supply_change_pct_7d","timestamp"], additionalProperties: true,
+        },
       },
     },
   },
   "/v1/wallet-profile": {
-    info: { input: { type: "http", method: "GET" } },
+    info: {
+      tags: ["crypto","wallet","onchain","forensics"],
+      summary: "On-chain wallet profiling - tx count, first/last seen, portfolio summary. Requires ?address=0x... $0.10 USDC/call.",
+      input: {
+        type: "http",
+        method: "GET",
+        queryParams: { address: "0x5118c9FB60b2d3d086491654D5a0C344298b57F2" },
+      },
+      output: { address: "0x...", tx_count: 0, net_worth_usd: 0, first_seen: "ISO", last_seen: "ISO", timestamp: "ISO" },
+    },
     schema: {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
-      required: ["address"],
       properties: {
-        address: { type: "string", description: "EVM wallet address (0x...)" },
+        input: {
+          type: "object",
+          properties: {
+            queryParams: {
+              type: "object",
+              properties: {
+                address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$", description: "EVM wallet address (0x...)" },
+              },
+              required: ["address"], additionalProperties: true,
+            },
+          },
+          additionalProperties: true,
+        },
+        output: {
+          type: "object",
+          properties: {
+            address:       { type: "string",  description: "Queried wallet address" },
+            tx_count:      { type: "integer", description: "Total on-chain tx count" },
+            net_worth_usd: { type: "number",  description: "Net worth in USD" },
+            first_seen:    { type: "string",  description: "ISO timestamp of first tx" },
+            last_seen:     { type: "string",  description: "ISO timestamp of latest tx" },
+            timestamp:     { type: "string",  description: "ISO timestamp of profile fetch" },
+          },
+          required: ["address","tx_count","net_worth_usd","timestamp"], additionalProperties: true,
+        },
       },
     },
   },
@@ -91,6 +252,16 @@ function parseAuthHeader(value) {
 }
 
 function nowSeconds() { return Math.floor(Date.now() / 1000); }
+
+// UTF-8-safe base64. btoa() rejects strings outside Latin-1 — payloads with em
+// dashes, emoji, or any non-ASCII character break it. Route through UTF-8
+// bytes first so the Payment-Required header can carry any Unicode.
+function b64Utf8(s) {
+  const bytes = new TextEncoder().encode(s);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
 
 function makeNonce() {
   const b = new Uint8Array(32);
@@ -158,7 +329,11 @@ async function checkX402(path, paymentHdr, bypassParam) {
     const amount   = PRICES[path];
     const resource = CFG.baseUrl + path;
     const bazaar   = BAZAAR[path];
-    const extra    = { name: "USD Coin", version: "2", bazaar }; // EIP-3009 USDC metadata + Bazaar
+    const tags     = bazaar?.info?.tags || ["crypto","ai-agent","x402-v2"];
+    const summary  = bazaar?.info?.summary || `x402 paid endpoint: ${path}`;
+    // ✅ Spec-compliant EIP-3009 hint (x402-foundation extracts Bazaar from
+    // top-level `extensions.bazaar`, not from `extra`).
+    const extra    = { name: "USD Coin", version: "2" };
 
     // ✅ FIX #5a + #5b: store _amount (numeric) and _expires — both were missing
     invoices.set(invNonce, {
@@ -166,37 +341,73 @@ async function checkX402(path, paymentHdr, bypassParam) {
       _expires:          nowSeconds() + CFG.invoiceTTL, // numeric, used by expiry check
       scheme:            "exact",
       network:           CFG.network,
-      maxAmountRequired: String(amount),
+      amount:            String(amount),
       resource,
       payTo:             CFG.payoutAddress,
       asset:             CFG.usdcContract,
       maxTimeoutSeconds: CFG.invoiceTTL,
     });
 
-    // Body format: accepts[] read by x402scan, agentcash, CDP Bazaar, and legacy clients
+    // ✅ FIX #10: STRICT V2 SPEC SHAPE
+    // @x402/core/schemas PaymentRequiredV2Schema requires:
+    //   { x402Version: 2, resource: ResourceInfoSchema, accepts: [...V2 entries], extensions?: {} }
+    // V2 PaymentRequirementsV2Schema:
+    //   { scheme, network, amount, asset, payTo, maxTimeoutSeconds, extra? }
+    // ResourceInfoSchema (top-level resource):
+    //   { url, description?, mimeType?, serviceName?, tags?, iconUrl? }
+    //   - serviceName + tags are constrained to printable ASCII (0x20-0x7e)
+    //     which is why we avoid em-dash etc. (FIX #9 traces back to this).
+    const serviceName = `b0x402-${path.split("/").pop()}`;
+
+    // The 402 BODY (server returns application/json body that mirrors the
+    // header so legacy V1 clients can still parse using either path).
     const body = {
       x402Version: 2,
+      resource: {
+        url:         resource,
+        description: summary,
+        mimeType:    "application/json",
+        serviceName,
+        tags,
+      },
       accepts: [{
         scheme:            "exact",
-        network:           CFG.network,        // ✅ FIX #2: "eip155:8453"
-        maxAmountRequired: String(amount),
+        network:           CFG.network,                  // "eip155:8453"
+        amount:            String(amount),               // ✅ FIX #10: renamed field (was maxAmountRequired)
         payTo:             CFG.payoutAddress,
         asset:             CFG.usdcContract,
         maxTimeoutSeconds: CFG.invoiceTTL,
-        resource,
-        description:       `x402 API call to ${path}`,
-        mimeType:          "application/json",
-        outputSchema:      { type: "object" },
-        extra,             // ✅ FIX #4: non-empty bazaar.schema
+        extra,             // EIP-3009 USDC metadata
       }],
+      // V2 Bazaar extension (canonical shape from x402san goldfiles):
+      //   extensions.bazaar.info.input.queryParams/body  (example data)
+      //   extensions.bazaar.schema                        (FLAT JSON Schema)
+      //     .properties.input.properties.queryParams|body   (canonical per-route)
+      //     .properties.output
+      extensions: { bazaar },
     };
 
-    // Payment-Required header: primary x402 v2 channel (base64-encoded JSON)
+    // The HEADER carries the SAME V2 envelope (decoded via
+    // @x402/core/http decodePaymentRequiredHeader).
     const hdrPayload = {
-      x402Version: 2, scheme: "exact", network: CFG.network,
-      nonce: invNonce, maxAmountRequired: String(amount),
-      resource, payTo: CFG.payoutAddress, asset: CFG.usdcContract,
-      maxTimeoutSeconds: CFG.invoiceTTL, extra,
+      x402Version: 2,
+      resource: {
+        url:         resource,
+        description: summary,
+        mimeType:    "application/json",
+        serviceName,
+        tags,
+      },
+      accepts: [{
+        scheme:            "exact",
+        network:           CFG.network,
+        amount:            String(amount),
+        payTo:             CFG.payoutAddress,
+        asset:             CFG.usdcContract,
+        maxTimeoutSeconds: CFG.invoiceTTL,
+        extra,
+      }],
+      extensions: { bazaar },
     };
 
     return {
@@ -204,7 +415,7 @@ async function checkX402(path, paymentHdr, bypassParam) {
         status: 402,
         headers: {
           "Content-Type":                  "application/json",
-          "Payment-Required":              btoa(JSON.stringify(hdrPayload)),
+          "Payment-Required":              b64Utf8(JSON.stringify(hdrPayload)),
           "X-Payment-Version":             "2",
           "Cache-Control":                 "no-store",
           "Access-Control-Expose-Headers": "Payment-Required, X-Payment-Version",
@@ -357,10 +568,10 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
 <p class="sub">b0x402 is a paid x402 API on the Base network. Four endpoints, USDC-based pricing, no subscriptions. Hit any route without an <code>x-payment</code> header to receive a 402 invoice.</p>
 <h2 style="font-size:13px;letter-spacing:.08em;color:#71717a;margin-bottom:18px;font-family:ui-monospace,monospace;">ENDPOINTS · 4</h2>
 <div class="grid">
-<a class="card" href="/v1/meme-hunter" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/meme-hunter</h3><p>Meme-coin signals from DexScreener — liquidity, volume, 24h price action, boost score.</p><span class="price">$0.010 USDC / call</span></a>
-<a class="card" href="/v1/defi-sentiment" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/defi-sentiment</h3><p>Macro DeFi market mood — bullish / bearish / neutral with confidence score.</p><span class="price">$0.10 USDC / call</span></a>
-<a class="card" href="/v1/dinalibrium" style="text-decoration:none;color:inherit"><h3><span class="method post">POST</span>/v1/dinalibrium</h3><p>ETH/stablecoin equilibrium ratio and stablecoin-supply dynamics.</p><span class="price">$0.10 USDC / call</span></a>
-<a class="card" href="/v1/wallet-profile?address=0x5118c9FB60b2d3d086491654D5a0C344298b57F2" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/wallet-profile</h3><p>On-chain wallet profile — tx count, first/last seen, portfolio summary for any EVM address.</p><span class="price">$0.010 USDC / call</span></a>
+<a class="card" href="/v1/meme-hunter" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/meme-hunter</h3><p>Meme-coin signals from DexScreener — liquidity, volume, 24h price action, boost score.</p><span class="price">$0.01 USDC / call</span></a>
+<a class="card" href="/v1/defi-sentiment" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/defi-sentiment</h3><p>Macro DeFi market mood — bullish / bearish / neutral with confidence score.</p><span class="price">$0.01 USDC / call</span></a>
+<a class="card" href="/v1/dinalibrium" style="text-decoration:none;color:inherit"><h3><span class="method post">POST</span>/v1/dinalibrium</h3><p>ETH/stablecoin equilibrium ratio and stablecoin-supply dynamics.</p><span class="price">$0.01 USDC / call</span></a>
+<a class="card" href="/v1/wallet-profile?address=0x5118c9FB60b2d3d086491654D5a0C344298b57F2" style="text-decoration:none;color:inherit"><h3><span class="method">GET</span>/v1/wallet-profile</h3><p>On-chain wallet profile — tx count, first/last seen, portfolio summary for any EVM address.</p><span class="price">$0.10 USDC / call</span></a>
 </div>
 <div class="section"><h2>How it works</h2>
 <ul>
@@ -377,7 +588,7 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
 <p>Full OpenAPI spec: <a href="/openapi.json" style="color:#60a5fa;text-decoration:none">/openapi.json</a> · x402 discovery doc: <a href="/.well-known/x402" style="color:#60a5fa;text-decoration:none">/.well-known/x402</a></p>
 </div>
 <div class="section"><h2>Listing status</h2>
-<p>Pending manual approval at <a href="https://www.x402scan.com/resources/register" style="color:#60a5fa">x402scan.com</a> — auto-indexed in <strong>Coinbase Bazaar</strong> on first settlement via the x402 protocol. No subscriptions required.</p>
+<p>Live and discoverable. Discovery index served at <a href="/.well-known/x402" style="color:#60a5fa;text-decoration:none">/.well-known/x402</a> — each endpoint is indexed on <strong>Coinbase Bazaar</strong> and the <strong>x402</strong> ecosystem registries the moment settlement hits Base. No subscriptions, no manual approval gate between you and the API.</p>
 <span class="tag">x402 V2</span><span class="tag">USDC</span><span class="tag">Base mainnet</span><span class="tag">no API key</span><span class="tag">no inventory</span>
 </div>
 <div class="footer"><div>Built by <strong>b0x70</strong> · autonomous seller agent</div><div><a href="https://portal.cdp.coinbase.com">CDP</a> · <a href="/openapi.json">OpenAPI</a> · <a href="https://www.x402.org">x402</a></div></div>
@@ -390,17 +601,54 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
     return Response.json({ status: "ok", time: new Date().toISOString() });
   }
 
-  // ── /.well-known/x402 — x402scan Discovery Document ─────────────────────
-  // x402scan validates per-resource object: { resource: string, accepts: [...] }
-  // url.pathname → "/.well-known/x402"
+  // ── /.well-known/x402 — x402san Discovery Document ─────────────────────
+  // Each entry is a V2 payment-required envelope (PaymentRequiredV2Schema shape)
+  // per the x402san goldfiles (apps/scan/src/lib/x402/v2/schema.test.ts).
   if (path === "/.well-known/x402.json" || path === "/.well-known/x402") {
-    const res = JSON.stringify({
-      version:         1,
-      resources:      [CFG.baseUrl + "/v1/meme-hunter", CFG.baseUrl + "/v1/defi-sentiment", CFG.baseUrl + "/v1/dinalibrium", CFG.baseUrl + "/v1/wallet-profile"],
-      ownershipProofs: [],
-      instructions:    "All endpoints require x402 USDC payment on Base. Hit without x-payment to receive 402 invoice.",
+    const entries = Object.keys(BAZAAR).map((p) => {
+      const amount   = PRICES[p];
+      const resource = CFG.baseUrl + p;
+      const bazaar   = BAZAAR[p];
+      const summary  = bazaar?.info?.summary || `x402 paid endpoint: ${p}`;
+      const tags     = bazaar?.info?.tags || ["crypto","ai-agent","x402-v2"];
+      const extra    = { name: "USD Coin", version: "2" };
+      return {
+        x402Version: 2,
+        resource: {
+          url:         resource,
+          description: summary,
+          mimeType:    "application/json",
+          serviceName: `b0x402-${p.split("/").pop()}`,
+          tags,
+        },
+        accepts: [{
+          scheme:            "exact",
+          network:           CFG.network,
+          amount:            String(amount),
+          payTo:             CFG.payoutAddress,
+          asset:             CFG.usdcContract,
+          maxTimeoutSeconds: CFG.invoiceTTL,
+          extra,
+        }],
+        extensions: { bazaar },
+      };
     });
-    return new Response(res, { headers: { "Content-Type": "application/json" } });
+    const payload = {
+      version:         1,
+      resources:       entries.map((e) => e.resource.url),   // (a) flat URI list
+      entries,                                                // (b) nested {x402Version,resource,accepts,extensions}
+      ownershipProofs: [],
+      info: {
+        title:       "b0x402",
+        description: "AI-powered crypto intelligence - meme signals, DeFi sentiment, market equilibrium, wallet profiling. Pay per call in USDC on Base via the x402 V2 protocol.",
+        tags:        ["crypto","defi","ai-agent","openapi","x402-v2","base","usdc"],
+        homepage:    CFG.baseUrl,
+      },
+      instructions:    "All endpoints require x402 USDC payment on Base (chain 8453). Hit any path without an x-payment header to receive a 402 invoice. Pay the requested USDC amount to the payout address, then retry with X-Payment header.",
+    };
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=60" },
+    });
   }
 
   // ── /openapi.json — x402scan OpenAPI Discovery ──────────────────────────
@@ -452,10 +700,9 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
               },
               "extensions": {
                 bazaar: {
-                  schema: {
-                    input:  { type: "object", properties: { limit: { type: "integer", description: "Results count (max 50)" }, sort_by: { type: "string", description: "score|volume|change|liquidity|boosted" } }, required: [], additionalProperties: true },
-                    output: { type: "object", properties: { count: { type: "integer", description: "Number of signals" }, signals: { type: "array", description: "Meme coin signals array" }, fetched_at: { type: "string", description: "ISO timestamp" } }, additionalProperties: true },
-                  },
+                  info:  { tags: BAZAAR["/v1/meme-hunter"].info.tags,
+                           summary: BAZAAR["/v1/meme-hunter"].info.summary },
+                  schema: BAZAAR["/v1/meme-hunter"].schema,
                 },
               },
               parameters: [
@@ -497,10 +744,9 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
               },
               "extensions": {
                 bazaar: {
-                  schema: {
-                    input:  { type: "object", properties: {}, required: [], additionalProperties: true },
-                    output: { type: "object", properties: { signal: { type: "string", description: "bullish | bearish | neutral" }, timestamp: { type: "string", description: "ISO timestamp" } }, additionalProperties: true },
-                  },
+                  info:   { tags: BAZAAR["/v1/defi-sentiment"].info.tags,
+                            summary: BAZAAR["/v1/defi-sentiment"].info.summary },
+                  schema: BAZAAR["/v1/defi-sentiment"].schema,
                 },
               },
               responses: {
@@ -535,10 +781,9 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
               },
               "extensions": {
                 bazaar: {
-                  schema: {
-                    input:  { type: "object", properties: { stablecoin: { type: "string", description: "USDC | USDT | DAI" }, window: { type: "string", description: "1d | 7d | 30d" } }, required: [], additionalProperties: true },
-                    output: { type: "object", properties: { eth_stablecoin_ratio: { type: "number", description: "ETH/stablecoin equilibrium ratio" }, stablecoin_supply_change_pct_7d: { type: "number", description: "7-day supply change pct" }, timestamp: { type: "string", description: "ISO timestamp" } }, additionalProperties: true },
-                  },
+                  info:   { tags: BAZAAR["/v1/dinalibrium"].info.tags,
+                            summary: BAZAAR["/v1/dinalibrium"].info.summary },
+                  schema: BAZAAR["/v1/dinalibrium"].schema,
                 },
               },
               requestBody: {
@@ -587,10 +832,9 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
               },
               "extensions": {
                 bazaar: {
-                  schema: {
-                    input:  { type: "object", properties: { address: { type: "string", description: "EVM wallet address (0x...)" } }, required: ["address"], additionalProperties: true },
-                    output: { type: "object", properties: { address: { type: "string", description: "Queried wallet address" }, tx_count: { type: "integer", description: "Total tx count" }, net_worth_usd: { type: "number", description: "Net worth in USD" }, timestamp: { type: "string", description: "ISO timestamp" } }, additionalProperties: true },
-                  },
+                  info:   { tags: BAZAAR["/v1/wallet-profile"].info.tags,
+                            summary: BAZAAR["/v1/wallet-profile"].info.summary },
+                  schema: BAZAAR["/v1/wallet-profile"].schema,
                 },
               },
               parameters: [
