@@ -3,11 +3,11 @@
 Free tier:  GET with no X-Payment header → 402 challenge (invoice issued)
 Paid tier:  GET with valid X-Payment header (tx_hash) → resource returned
 
-Price tiers:
+Price tiers (matches live cf-worker PRICES table as of 2026-07-21):
   FREE  — any endpoint, limited to 1 req/s per IP (rate limit)
-  TIER1 (0.001 USDC = 1000 wei) — /meme-hunter
-  TIER2 (0.005 USDC = 5000)     — /dinalibrium, /defi-sentiment
-  TIER3 (0.01  USDC = 10000)    — /wallet-profile (deeper analysis)
+  TIER1 (0.01 USDC = 10000 wei) — /meme-hunter
+  TIER2 (0.01 USDC = 10000)     — /dinalibrium, /defi-sentiment
+  TIER3 (0.10 USDC = 100000)    — /wallet-profile (higher forensic value)
 """
 
 from __future__ import annotations
@@ -16,11 +16,12 @@ USDC_DECIMALS = 6
 
 # Atomic USDC units (USDC has 6 decimals)
 PRICE_FREE   = 0
-PRICE_TIER1  = 1_000      # 0.001 USDC
-PRICE_TIER2  = 5_000      # 0.005 USDC
-PRICE_TIER3  = 10_000     # 0.01 USDC
+PRICE_TIER1  = 10_000     # 0.01 USDC
+PRICE_TIER2  = 10_000     # 0.01 USDC
+PRICE_TIER3  = 100_000    # 0.10 USDC
 
-USDC_CONTRACT = "0x833589fCD6eDb700d8e099499C050dE848489198"
+# Live settlement config — matches cf-worker/src/index.js CFG
+USDC_CONTRACT = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
 CHAIN_ID = 8453  # Base mainnet
 
 # Endpoint → price tier
@@ -41,4 +42,4 @@ ENDPOINT_NAMES = {
 
 def price_label(atomic: int) -> str:
     """Human-readable USDC price."""
-    return f"${atomic / 10**USDC_DECIMALS:.3f} USDC"
+    return f"${atomic / 10**USDC_DECIMALS:.2f} USDC"

@@ -29,10 +29,10 @@ Wants raw data for research notes, dashboards, newsletters. Calls a few endpoint
 ## Sales copy blocks (drop in any context)
 
 ### Stripe-dead-simple one-liner
-> Pay-per-call crypto intelligence for AI agents. 4 endpoints, USDC on Base. No signup, no API key. From $0.001 per call.
+> Pay-per-call crypto intelligence for AI agents. 4 endpoints, USDC on Base. No signup, no API key. From $0.01 per call.
 
 ### Long-form
-> b0x402 is a hosted x402 protocol seller running on Cloudflare Workers. You call one of four endpoints (meme-hunter, defi-sentiment, dinalibrium, wallet-profile). Without an x-payment header, you get HTTP 402 with a base64 invoice asking for USDC. You pay $0.001–$0.010 USDC to the configured payout address on Base mainnet, retry with the receipt, get the data. No subscription. No API key. No rate limit. Settlement on Base L2 (chain 8453), finality under 2 seconds. The four endpoints cover meme coin momentum discovery (DexScreener-aggregated), overall DeFi market mood, ETH/stablecoin equilibrium metrics, and per-address wallet forensics.
+> b0x402 is a hosted x402 protocol seller running on Cloudflare Workers. You call one of four endpoints (meme-hunter, defi-sentiment, dinalibrium, wallet-profile). Without an x-payment header, you get HTTP 402 with a base64 invoice asking for USDC. You pay $0.01–$0.10 USDC to the configured payout address on Base mainnet, retry with the receipt, get the data. No subscription. No API key. No rate limit. Settlement on Base L2 (chain 8453), finality under 2 seconds. The four endpoints cover meme coin momentum discovery (DexScreener-aggregated), overall DeFi market mood, ETH/stablecoin equilibrium metrics, and per-address wallet forensics.
 
 ### Crypto-native flavor
 > Cheap, deterministic AI-crypto signals. No trade credit BS. Just kick USDC at it through the door and the data comes right back. Built for agent consumption — every endpoint returns typed JSON, no flaky HTML scraping.
@@ -55,7 +55,7 @@ A: No. Each call is atomic. You can flood 1000 calls in a second and pay per cal
 A: Currently USDC only on Base. Future versions may add USDT and additional L2s.
 
 **Q: What does `wallet-profile` cost?**
-A: $0.010 USDC per call. Returns tx count, first/last seen, portfolio summary for any EVM address.
+A: $0.10 USDC per call. Returns tx count, first/last seen, portfolio summary for any EVM address.
 
 **Q: How accurate are the signals?**
 A: We surface upstreams (DexScreener, Base RPC, etc.) with low latency. They're indicators, not advice. Use at your own risk.
@@ -75,7 +75,7 @@ A: We surface upstreams (DexScreener, Base RPC, etc.) with low latency. They're 
 When traffic hits, the conversion chain is:
 1. Agent developer sees listing at x402scan.com or awesome-x402
 2. Visits URL → gets 402 + invoice
-3. Has agent with USDC-bearing wallet (any x402 client) → pays 0.001-0.010 USDC
+3. Has agent with USDC-bearing wallet (any x402 client) → pays $0.01–$0.10 USDC
 4. Receives data → integrates into their tool
 5. Repeats per call
 
@@ -83,7 +83,7 @@ Expected buyer dev audience size (informed guess):
 - Direct: ~50-200 active x402-aware agents as of mid-2026
 - Adjacent: ~5,000-20,000 builders/agents consuming crypto APIs that could discover x402 pattern
 
-Realistically, 1-5% of relevant agents will hit the URL in the first 30 days with a price floor of $0.001. Total expected volume for v1: 100-500 calls/week if listings execute well.
+Realistically, 1-5% of relevant agents will hit the URL in the first 30 days with a price floor of $0.01. Total expected volume for v1: 100-500 calls/week if listings execute well.
 
 ## Feedback loop
 

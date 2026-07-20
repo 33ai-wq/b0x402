@@ -6,11 +6,11 @@ The **production deployment** of b0x402 runs on Cloudflare Workers as a JavaScri
 
 ## What's here
 
-- `src/index.js` — 752-line Worker source. Implements:
-  - `GET /v1/meme-hunter` ($0.001 USDC) — DexScreener-based meme coin signals
-  - `GET /v1/defi-sentiment` ($0.005 USDC) — market mood signal (bullish/bearish/neutral)
-  - `POST /v1/dinalibrium` ($0.005 USDC) — ETH/stablecoin equilibrium metrics
-  - `GET /v1/wallet-profile` ($0.010 USDC) — on-chain address profiling
+- `src/index.js` — Worker source (≈920 lines). Implements:
+  - `GET /v1/meme-hunter` ($0.01 USDC) — DexScreener-based meme coin signals
+  - `GET /v1/defi-sentiment` ($0.01 USDC) — market mood signal (bullish/bearish/neutral)
+  - `POST /v1/dinalibrium` ($0.01 USDC) — ETH/stablecoin equilibrium metrics
+  - `GET /v1/wallet-profile` ($0.10 USDC) — on-chain address profiling
   - `GET /openapi.json` — x402scan canonical discovery spec
   - `GET /.well-known/x402.json` — x402 discovery doc (alternative)
   - `GET /health` — free probe

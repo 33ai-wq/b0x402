@@ -18,10 +18,10 @@ Pay-per-call AI endpoints for crypto market intelligence, settled in **USDC on B
 
 | Endpoint | Path | Free tier | Paid price |
 |----------|------|-----------|------------|
-| `/v1/meme-hunter` | `GET /v1/meme-hunter?token=<CA>` | 402 challenge | $0.001 USDC |
-| `/v1/dinalibrium` | `POST /v1/dinalibrium` body `{"token": "0x..."}` | 402 challenge | $0.005 USDC |
-| `/v1/defi-sentiment` | `GET /v1/defi-sentiment?topic=base` | 402 challenge | $0.005 USDC |
-| `/v1/wallet-profile` | `GET /v1/wallet-profile?wallet=0x...` | 402 challenge | $0.010 USDC |
+| `/v1/meme-hunter` | `GET /v1/meme-hunter?token=<CA>` | 402 challenge | $0.01 USDC |
+| `/v1/dinalibrium` | `POST /v1/dinalibrium` body `{"token": "0x..."}` | 402 challenge | $0.01 USDC |
+| `/v1/defi-sentiment` | `GET /v1/defi-sentiment?topic=base` | 402 challenge | $0.01 USDC |
+| `/v1/wallet-profile` | `GET /v1/wallet-profile?wallet=0x...` | 402 challenge | $0.10 USDC |
 
 Dev bypass (only for testing):
 ```

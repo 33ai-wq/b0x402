@@ -38,15 +38,17 @@ Call this skill when the user/agent asks for:
 
 | Endpoint | Method | Price |
 |----------|--------|-------|
-| `/v1/meme-hunter`     | GET  | 1000 atomic ($0.001) |
-| `/v1/defi-sentiment`  | GET  | 5000 atomic ($0.005) |
-| `/v1/dinalibrium`     | POST | 5000 atomic ($0.005) |
-| `/v1/wallet-profile`  | GET  | 10000 atomic ($0.010) |
+| `/v1/meme-hunter`     | GET  | 10000 atomic ($0.01) |
+| `/v1/defi-sentiment`  | GET  | 10000 atomic ($0.01) |
+| `/v1/dinalibrium`     | POST | 10000 atomic ($0.01) |
+| `/v1/wallet-profile`  | GET  | 100000 atomic ($0.10) |
+
+> Prices mirror the live worker's PRICES table and match the amounts in the 402 invoice.
 
 ## Payment flow
 
 1. `GET /v1/...` without `x-payment` header → server returns HTTP 402 + `Payment-Required` (base64 JSON invoice) + `X-Payment-Version: 2`
-2. Decode invoice → extract `payTo`, `asset`, `maxAmountRequired`
+2. Decode invoice → extract `payTo`, `asset`, `amount` (USDC atomic, 6 decimals)
 3. Pay USDC to `payTo = 0x57EEC52d76A4A78D4562fc2564101A4bD2e3F357` on Base mainnet (chain 8453, USDC contract `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`)
 4. Retry request with `x-payment` header carrying the on-chain transaction receipt
 5. Server verifies via `eth_getTransactionReceipt` against Base RPC

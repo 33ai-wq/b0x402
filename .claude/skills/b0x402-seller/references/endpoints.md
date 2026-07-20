@@ -1,6 +1,6 @@
 # Endpoints — Detailed Reference
 
-## 1. GET /v1/meme-hunter ($0.001 USDC)
+## 1. GET /v1/meme-hunter ($0.01 USDC)
 
 **Purpose:** Surface DexScreener-based meme coin signals with liquidity, volume, 24h price action, and boost score.
 
@@ -29,7 +29,7 @@
 }
 ```
 
-## 2. GET /v1/defi-sentiment ($0.005 USDC)
+## 2. GET /v1/defi-sentiment ($0.01 USDC)
 
 **Purpose:** Real-time DeFi market mood indicator — bullish / bearish / neutral with confidence score.
 
@@ -44,7 +44,7 @@
 }
 ```
 
-## 3. POST /v1/dinalibrium ($0.005 USDC)
+## 3. POST /v1/dinalibrium ($0.01 USDC)
 
 **Purpose:** ETH/stablecoin equilibrium metrics. Stablecoin supply dynamics.
 
@@ -67,7 +67,7 @@
 }
 ```
 
-## 4. GET /v1/wallet-profile ($0.010 USDC)
+## 4. GET /v1/wallet-profile ($0.10 USDC)
 
 **Purpose:** On-chain wallet profile for any EVM address on Base.
 
