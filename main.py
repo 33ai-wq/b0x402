@@ -204,6 +204,66 @@ app.include_router(defi_router,   prefix="/v1", tags=["x402"])
 app.include_router(wallet_router, prefix="/v1", tags=["x402"])
 
 
+# ── x402 Discovery Manifest ────────────────────────────────────────────────
+
+def build_discovery_manifest():
+    """Build x402 discovery manifest per x402san spec (same as CF worker)."""
+    from x402_lib import USDC_CONTRACT, CHAIN_ID
+    base_url = os.environ.get("X402_BASE_URL", "https://pronomad.duckdns.org")
+    payout_address = PAYOUT_ADDR
+    
+    entries = []
+    for ep, price in ENDPOINT_PRICES.items():
+        resource = base_url + ep
+        name = ENDPOINT_NAMES.get(ep, ep)
+        entries.append({
+            "x402Version": 2,
+            "resource": {
+                "url": resource,
+                "description": f"x402 paid endpoint: {ep}",
+                "mimeType": "application/json",
+                "serviceName": f"b0x402-{ep.split('/').pop()}",
+                "tags": ["crypto", "ai-agent", "x402-v2"],
+            },
+            "accepts": [{
+                "scheme": "exact",
+                "network": f"eip155:{CHAIN_ID}",
+                "amount": str(price),
+                "payTo": payout_address,
+                "asset": USDC_CONTRACT,
+                "maxTimeoutSeconds": 300,
+                "extra": {"name": "USD Coin", "version": "2"},
+            }],
+        })
+    
+    return {
+        "version": 1,
+        "resources": [e["resource"]["url"] for e in entries],
+        "entries": entries,
+        "ownershipProofs": [],
+        "info": {
+            "title": "b0x402",
+            "description": "AI-powered crypto intelligence - meme signals, DeFi sentiment, market equilibrium, wallet profiling. Pay per call in USDC on Base via the x402 V2 protocol.",
+            "tags": ["crypto", "defi", "ai-agent", "openapi", "x402-v2", "base", "usdc"],
+            "homepage": base_url,
+        },
+        "instructions": "All endpoints require x402 USDC payment on Base (chain 8453). Hit any path without an x-payment header to receive a 402 invoice. Pay the requested USDC amount to the payout address, then retry with X-Payment header.",
+    }
+
+
+@app.get("/.well-known/x402.json", tags=["discovery"])
+@app.get("/.well-known/x402", tags=["discovery"])
+async def x402_discovery():
+    """x402 discovery manifest - indexed by x402scan and Coinbase Bazaar."""
+    return JSONResponse(build_discovery_manifest())
+
+
+@app.get("/x402.json", tags=["discovery"])
+async def x402_discovery_root():
+    """x402 discovery manifest at root path (alternative location)."""
+    return JSONResponse(build_discovery_manifest())
+
+
 # ── Health / info ──────────────────────────────────────────────────────────
 
 @app.get("/health")

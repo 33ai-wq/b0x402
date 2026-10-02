@@ -33,3 +33,7 @@ pending_invoices.json
 # ── Fly.io / deploy artifacts (deployed via fly secrets, not via git) ──────
 .fly/
 fly.deploy.*
+
+# wrangler build cache
+cf-worker/.wrangler/
+.wrangler/

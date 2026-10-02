@@ -749,6 +749,9 @@ h1 .accent { background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 50%, #ec4899
                   schema: BAZAAR["/v1/defi-sentiment"].schema,
                 },
               },
+              parameters: [
+                { name: "topic", in: "query", required: false, schema: { type: "string", default: "base", description: "Market topic filter (e.g. 'base', 'defi')" } },
+              ],
               responses: {
                 "200": { description: "Sentiment signal", content: { "application/json": { schema: { type: "object", properties: { signal: { type: "string" }, score: { type: "number" } } } } } },
                 "402": { description: "Payment Required" },
